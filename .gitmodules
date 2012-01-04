@@ -1,0 +1,3 @@
+[submodule "Plugins/autoroute/phpdbl"]
+	path = Plugins/autoroute/phpdbl
+	url = /Applications/XAMPP/xamppfiles/htdocs/soapbox/slim-proxy/slim-plugins/Plugins/autoroute/phpdbl
