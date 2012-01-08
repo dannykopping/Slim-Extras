@@ -2,12 +2,15 @@
 
     class AutoRoutePlugin extends Slim_Plugin_Base
     {
-        public function __construct(Slim $slimInstance)
+        private $classes;
+
+        public function __construct(Slim $slimInstance, $args=null)
         {
-            parent::__construct($slimInstance);
+            parent::__construct($slimInstance, $args);
             spl_autoload_register(array('AutoRoutePlugin', 'autoload'));
 
-            $this->analyzeClassesForAutoRoutes(new UserService());
+            $this->classes = $args;
+            $this->analyzeClassesForAutoRoutes($this->classes);
         }
 
         public static function autoload($class)
@@ -15,8 +18,7 @@
             // check same directory
             $file = realpath(dirname(__FILE__) . "/" . $class . ".php");
 
-            $searchDirectories = array(dirname(__FILE__) . "/../../src_php/org/soapbox/services/",
-                                       dirname(__FILE__) . "/phpdbl/lib/");
+            $searchDirectories = array(dirname(__FILE__) . "/phpdbl/lib/");
 
             // if none found, check other directories
             if (!$file)
@@ -70,11 +72,16 @@
 
                 foreach ($routes as $route)
                 {
+                    if(empty($route))
+                        continue;
+
                     $slimRoute = $this->getSlimInstance()->map($route->getUri(), $route->getCallback());
                     foreach ($route->getMethods() as $method)
                         $slimRoute->via($method);
                 }
             }
+
+            $this->slimInstance->applyHook("slim.plugin.autoroute.ready", $routes);
         }
 
         /**
@@ -86,6 +93,9 @@
         private function createRoute(MethodElement $method, $class)
         {
             $uri = $this->getRouteAnnotation($method);
+            if(!$uri)
+                return null;
+
             $httpMethods = $this->getRouteMethods($method);
 
             $route = new Route();
@@ -100,14 +110,7 @@
         {
             $routeAnnotation = $method->getAnnotation("route");
 
-            if (!$routeAnnotation)
-            {
-                throw new Exception("No @route annotation could be found in [" . $method->getClass()->name . "::" . $method->name . "]. " .
-                    "This annotation is required for routing. " .
-                    "Add a @ignore annotation to exclude this method from auto-routing");
-            }
-
-            if (empty($routeAnnotation->values) || empty($routeAnnotation->values[0]))
+            if (!empty($routeAnnotation) && (empty($routeAnnotation->values) || empty($routeAnnotation->values[0])))
             {
                 throw new Exception("The method [" . $method->getClass()->name . "::" . $method->name . "] requires " .
                     "a value for the @route annotation. Example:\n" .
@@ -116,7 +119,10 @@
                     "*/");
             }
 
-            return $routeAnnotation->values[0];
+            if(!empty($routeAnnotation))
+                return $routeAnnotation->values[0];
+
+            return null;
         }
 
         private function getRouteMethods($method)
