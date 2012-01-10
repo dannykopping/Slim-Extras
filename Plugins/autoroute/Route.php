@@ -2,19 +2,19 @@
     /**
      *    A Value-Object that defines what a "route" is
      *
-     * @property string    uri
-     * @property array        arguments
-     * @property array        methods
-     * @property array        callback
-     * @property bool        passBody
+     * @property string     uri
+     * @property array      arguments
+     * @property array      methods
+     * @property array      callback
+     * @property array      authorizedUsers
      */
     class Route
     {
         private $_uri;
         private $_arguments;
+        private $_authorizedUsers;
         private $_methods;
         private $_callback;
-        private $_passBody;
 
         /**
          * Setter super method to manipulate variables as they are assigned a value
@@ -27,6 +27,7 @@
             switch ($name)
             {
                 case "methods":
+                case "authorizedUsers":
                     if (empty($value))
                         break;
 
@@ -107,14 +108,14 @@
             return $this->_callback;
         }
 
-        public function setPassBody($passBody)
+        public function setAuthorizedUsers($authorizedUsers)
         {
-            $this->_passBody = $passBody;
+            $this->_authorizedUsers = $authorizedUsers;
         }
 
-        public function getPassBody()
+        public function getAuthorizedUsers()
         {
-            return $this->_passBody;
+            return $this->_authorizedUsers;
         }
     }
 
