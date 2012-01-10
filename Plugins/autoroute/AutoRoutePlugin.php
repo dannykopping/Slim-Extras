@@ -1,14 +1,10 @@
 <?php
 
-    require_once dirname(__FILE__)."/Route.php";
-
     class AutoRoutePlugin extends Slim_Plugin_Base
     {
         private $classes;
 
         private $routes;
-
-        protected static $authorizationCallback;
 
         public function __construct(Slim $slimInstance, $args=null)
         {
@@ -17,8 +13,6 @@
 
             $this->classes = $args;
             $this->analyzeClassesForAutoRoutes($this->classes);
-
-            $this->slimInstance->hook("slim.before.dispatch", array($this, "checkAuthorizationForRoute"));
         }
 
         public static function autoload($class)
@@ -29,10 +23,17 @@
             // if none found, check other directories
             if (!$file)
             {
-                $searchDirectories = array(dirname(__FILE__) . "/phpdbl/lib/");
+                $searchDirectories = array(dirname(__FILE__),
+                                           dirname(__FILE__)."/util",
+                                           dirname(__FILE__)."/phpdbl/lib/");
 
                 foreach ($searchDirectories as $dir)
+                {
                     $file = realpath($dir . "/" . $class . ".php");
+
+                    if($file)
+                        break;
+                }
             }
 
             // if found, require_once the sucker!
@@ -66,9 +67,15 @@
                     continue;
 
                 $routes = array();
+                $descriptors = array();
 
                 foreach ($methods as $method)
                 {
+                    $annotations = $this->buildAnnotationDescriptors($method->getAnnotations());
+                    $descriptor = new RouteDescriptor($annotations, $method->getReflectionObject());
+
+                    $descriptors[] = $descriptor;
+
                     // @ignore annotations force the AutoRouter to ignore that method
                     if ($method->hasAnnotation("ignore"))
                         continue;
@@ -80,7 +87,7 @@
                             "instead of the class name.");
                     }
 
-                    $routes[] = $this->createRoute($method, $class);
+                    $routes[] = $this->createRoute($method, $class, $descriptor);
                 }
 
                 foreach ($routes as $route)
@@ -101,12 +108,31 @@
         }
 
         /**
+         * @param array $annotations
+         * @return array
+         */
+        private function buildAnnotationDescriptors(array $annotations)
+        {
+            if(empty($annotations))
+                return;
+
+            $descriptors = array();
+            foreach($annotations as $annotation)
+            {
+                $descriptors[] = new RouteAnnotation($annotation->name, $annotation->values);
+            }
+
+            return $descriptors;
+        }
+
+        /**
          * @param MethodElement $method
          * @param string|object $class
+         * @param RouteDescriptor $descriptor
          *
          * @return Route
          */
-        private function createRoute(MethodElement $method, $class)
+        private function createRoute(MethodElement $method, $class, RouteDescriptor $descriptor)
         {
             $uri = $this->getRouteAnnotation($method);
             if(!$uri)
@@ -115,7 +141,7 @@
             $httpMethods = $this->getRouteMethods($method);
             $authorizedUsers = $this->getAuthorizedUsers($method);
 
-            $route = new Route();
+            $route = new Route($descriptor);
             $route->setUri($uri);
             $route->setMethods($httpMethods);
             $route->setAuthorizedUsers($authorizedUsers);
@@ -187,46 +213,6 @@
             }
 
             return explode(",", $authorizeAnnotation->values[0]);
-        }
-
-        public function checkAuthorizationForRoute($route)
-        {
-            $callable = $route->getCallable();
-            $authCallback = self::getAuthorizationCallback();
-
-            if(empty($authCallback))
-                return;
-
-            foreach($this->routes as $classes)
-            {
-                foreach($classes as $classMethodRoutes)
-                {
-                    foreach($classMethodRoutes as $route)
-                    {
-                        // check that the auto-route's callable is the same as the pending route's callable
-                        if($route->getCallback() === $callable)
-                        {
-                            $authorizedUsers = $route->getAuthorizedUsers();
-                            $authorized = call_user_func_array(self::getAuthorizationCallback(), array($authorizedUsers));
-
-                            if(!$authorized)
-                            {
-                                $this->slimInstance->halt(401, "You are not authorized to execute this function");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        public static function authorizationCallback($callable)
-        {
-            self::$authorizationCallback = $callable;
-        }
-
-        public static function getAuthorizationCallback()
-        {
-            return self::$authorizationCallback;
         }
     }
 

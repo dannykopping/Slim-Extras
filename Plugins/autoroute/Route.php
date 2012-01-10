@@ -16,6 +16,13 @@
         private $_methods;
         private $_callback;
 
+        private $_descriptor;
+
+        public function __construct(RouteDescriptor $descriptor)
+        {
+            $this->_descriptor = $descriptor;
+        }
+
         /**
          * Setter super method to manipulate variables as they are assigned a value
          *
@@ -116,6 +123,11 @@
         public function getAuthorizedUsers()
         {
             return $this->_authorizedUsers;
+        }
+
+        public function getDescriptor()
+        {
+            return $this->_descriptor;
         }
     }
 
