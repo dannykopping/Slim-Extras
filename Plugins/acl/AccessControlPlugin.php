@@ -35,6 +35,9 @@
                 if ($route->getCallback() === $callable)
                 {
                     $authorizedUsers = $route->getAuthorizedUsers();
+                    if(empty($authorizedUsers))
+                        return;
+
                     $authorized = call_user_func_array(self::getAuthorizationCallback(), array($authorizedUsers));
 
                     if (!$authorized)
