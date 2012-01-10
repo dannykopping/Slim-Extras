@@ -26,26 +26,20 @@
             if (empty($authCallback))
                 return;
 
-            if(!$this->routes)
+            if (!$this->routes)
                 return;
 
-            foreach ($this->routes as $classes)
+            foreach ($this->routes as $route)
             {
-                foreach ($classes as $classMethodRoutes)
+                // check that the auto-route's callable is the same as the pending route's callable
+                if ($route->getCallback() === $callable)
                 {
-                    foreach ($classMethodRoutes as $route)
-                    {
-                        // check that the auto-route's callable is the same as the pending route's callable
-                        if ($route->getCallback() === $callable)
-                        {
-                            $authorizedUsers = $route->getAuthorizedUsers();
-                            $authorized = call_user_func_array(self::getAuthorizationCallback(), array($authorizedUsers));
+                    $authorizedUsers = $route->getAuthorizedUsers();
+                    $authorized = call_user_func_array(self::getAuthorizationCallback(), array($authorizedUsers));
 
-                            if (!$authorized)
-                            {
-                                $this->slimInstance->halt(401, "You are not authorized to execute this function");
-                            }
-                        }
+                    if (!$authorized)
+                    {
+                        $this->slimInstance->halt(401, "You are not authorized to execute this function");
                     }
                 }
             }

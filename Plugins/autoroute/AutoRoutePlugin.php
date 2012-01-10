@@ -49,13 +49,10 @@
             if (!is_array($classes))
                 $classes = array($classes);
 
-            $classRoutes = array();
+            $allRoutes = array();
 
             foreach ($classes as $class)
             {
-                $className = is_object($class) ? get_class($class) : $class;
-                $classRoutes[$className] = array();
-
                 $dbp = new DocBlockParser();
                 $dbp->setAllowInherited(false);
                 $dbp->setMethodFilter(ReflectionMethod::IS_PUBLIC);
@@ -87,7 +84,10 @@
                             "instead of the class name.");
                     }
 
-                    $routes[] = $this->createRoute($method, $class, $descriptor);
+                    $route = $this->createRoute($method, $class, $descriptor);
+
+                    $routes[] = $route;
+                    $allRoutes[] = $route;
                 }
 
                 foreach ($routes as $route)
@@ -99,12 +99,10 @@
                     foreach ($route->getMethods() as $method)
                         $slimRoute->via($method);
                 }
-
-                $classRoutes[$className][] = $routes;
             }
 
-            $this->routes = $classRoutes;
-            $this->slimInstance->applyHook("slim.plugin.autoroute.ready", $classRoutes);
+            $this->routes = $allRoutes;
+            $this->slimInstance->applyHook("slim.plugin.autoroute.ready", $allRoutes);
         }
 
         /**
