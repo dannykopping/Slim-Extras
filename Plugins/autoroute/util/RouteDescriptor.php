@@ -4,7 +4,11 @@
         private $_annotations;
         private $_reflectionMethod;
 
-        public function __construct(array $annotations, $reflectionMethod)
+        /**
+         * @param array $annotations
+         * @param ReflectionMethod $reflectionMethod
+         */
+        public function __construct($annotations, $reflectionMethod)
         {
             $this->_annotations = $annotations;
             $this->_reflectionMethod = $reflectionMethod;

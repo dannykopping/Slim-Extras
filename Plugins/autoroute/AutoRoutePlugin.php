@@ -109,7 +109,7 @@
          * @param array $annotations
          * @return array
          */
-        private function buildAnnotationDescriptors(array $annotations)
+        private function buildAnnotationDescriptors($annotations)
         {
             if(empty($annotations))
                 return;
