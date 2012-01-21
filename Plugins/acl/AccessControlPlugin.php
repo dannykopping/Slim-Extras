@@ -5,7 +5,7 @@
 
         protected static $authorizationCallback;
 
-        public function __construct(Slim &$slimInstance, $args = null)
+        public function __construct(Slim $slimInstance, $args = null)
         {
             parent::__construct($slimInstance, $args);
 
@@ -26,11 +26,15 @@
             if (empty($authCallback))
                 return;
 
+            // if no AutoRoutes are available, call the callable (this plugin only works with AutoRoutes)
             if (!$this->routes)
                 return;
 
             foreach ($this->routes as $route)
             {
+                if(empty($route))
+                    continue;
+
                 // check that the auto-route's callable is the same as the pending route's callable
                 if ($route->getCallback() === $callable)
                 {

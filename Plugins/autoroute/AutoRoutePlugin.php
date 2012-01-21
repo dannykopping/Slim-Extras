@@ -69,6 +69,11 @@
                 foreach ($methods as $method)
                 {
                     $annotations = $this->buildAnnotationDescriptors($method->getAnnotations());
+
+                    // if there is no @route annotation, ignore this method
+                    if(!$method->hasAnnotation("route"))
+                        continue;
+
                     $descriptor = new RouteDescriptor($annotations, $method->getReflectionObject());
 
                     $descriptors[] = $descriptor;
@@ -117,6 +122,9 @@
             $descriptors = array();
             foreach($annotations as $annotation)
             {
+                if(empty($annotation) || empty($annotation->name))
+                    continue;
+
                 $descriptors[] = new RouteAnnotation($annotation->name, $annotation->values);
             }
 
@@ -154,7 +162,7 @@
 
             if (!empty($routeAnnotation) && (empty($routeAnnotation->values) || empty($routeAnnotation->values[0])))
             {
-                throw new Exception("The method [" . $method->getClass()->name . "::" . $method->name . "] requires " .
+                throw new RuntimeException("The method [" . $method->getClass()->name . "::" . $method->name . "] requires " .
                     "a value for the @route annotation. Example:\n" .
                     "/**\n" .
                     "* @route	/users/get\n" .
@@ -180,7 +188,7 @@
 
             if (empty($routeMethodsAnnotation->values) || empty($routeMethodsAnnotation->values[0]))
             {
-                throw new Exception("The method [" . $method->getClass()->name . "::" . $method->name . "] requires " .
+                throw new RuntimeException("The method [" . $method->getClass()->name . "::" . $method->name . "] requires " .
                     "a value for the @routeMethods annotation. Example:\n" .
                     "/**\n" .
                     "* @routeMethods	GET,POST\n" .
@@ -203,7 +211,7 @@
 
             if (empty($authorizeAnnotation->values) || empty($authorizeAnnotation->values[0]))
             {
-                throw new Exception("The method [" . $method->getClass()->name . "::" . $method->name . "] requires " .
+                throw new RuntimeException("The method [" . $method->getClass()->name . "::" . $method->name . "] requires " .
                     "a value for the @authorize annotation. Example:\n" .
                     "/**\n" .
                     "* @authorize	user,admin\n" .
