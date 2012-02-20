@@ -74,7 +74,7 @@
                     if(!$method->hasAnnotation("route"))
                         continue;
 
-                    $descriptor = new RouteDescriptor($annotations, $method->getReflectionObject());
+                    $descriptor = new RouteDescriptor($annotations, $method);
 
                     $descriptors[] = $descriptor;
 
